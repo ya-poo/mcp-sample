@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { z } from 'zod';
 
 const server = new McpServer({
   name: 'mcp-sample',
@@ -9,16 +10,25 @@ const server = new McpServer({
   },
 });
 
-server.tool('generate_uuid', 'Generate random UUIDs', {}, async () => {
-  return {
-    content: [
-      {
-        type: 'text',
-        text: crypto.randomUUID(),
-      },
-    ],
-  };
-});
+server.tool(
+  'generate_uuid',
+  'Generate random UUIDs',
+  {
+    count: z.number().int().positive().default(1).describe('Number of UUIDs to generate'),
+  },
+  async ({ count }) => {
+    const uuids = Array.from({ length: count }, () => crypto.randomUUID());
+
+    return {
+      content: [
+        {
+          type: 'text',
+          text: uuids.join('\n'),
+        },
+      ],
+    };
+  },
+);
 
 async function main() {
   const transport = new StdioServerTransport();
